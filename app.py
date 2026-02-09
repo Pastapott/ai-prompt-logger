@@ -68,7 +68,7 @@ def call_gemini(prompt: str) -> str:
 def home():
     return render_template("index.html")
 
-
+#
 @app.get("/api/logs")
 def api_logs():
     return jsonify({"logs": read_logs(limit=50)})
