@@ -1,31 +1,3 @@
-async function loadLogs() {
-  const res = await fetch("/api/logs");
-  const data = await res.json();
-  const logsEl = document.getElementById("logs");
-  logsEl.innerHTML = "";
-
-  const logs = (data.logs || []).slice().reverse();
-  if (logs.length === 0) {
-    logsEl.innerHTML = "<p class='muted'>No logs yet.</p>";
-    return;
-  }
-
-  for (const item of logs) {
-    const div = document.createElement("div");
-    div.className = "log";
-    div.innerHTML = `
-      <div class="muted">
-        <span class="pill">${item.mode}</span>
-        <span class="pill">${item.env || "dev"}</span>
-        <span>${item.ts}</span>
-      </div>
-      <div><strong>Prompt:</strong> ${escapeHtml(item.prompt || "")}</div>
-      <div><strong>Reply:</strong> ${escapeHtml(item.reply || "")}</div>
-    `;
-    logsEl.appendChild(div);
-  }
-}
-
 function escapeHtml(s) {
   return String(s)
     .replaceAll("&", "&amp;")
@@ -33,26 +5,94 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;");
 }
 
+async function fetchLogs() {
+  const res = await fetch("/api/logs");
+  const data = await res.json();
+  // backend returns { logs: [...] }
+  return data.logs || [];
+}
+
+function renderLogs(logs) {
+  const logsEl = document.getElementById("logs");
+  const emptyEl = document.getElementById("logs-empty");
+  if (!logsEl) return;
+
+  logsEl.innerHTML = "";
+  const recent = (logs || []).slice().reverse().slice(0, 6);
+
+  if (recent.length === 0) {
+    if (emptyEl) emptyEl.style.display = "block";
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = "none";
+
+  for (const item of recent) {
+    const div = document.createElement("div");
+    div.className = "log-row";
+
+    const modeClass = (item.mode || "").includes("real") ? "ai" : "stub";
+
+    div.innerHTML = `
+      <div class="log-meta">
+        <span class="pill ${modeClass}">${escapeHtml(item.mode || "unknown")}</span>
+        <span class="pill ok">${escapeHtml(item.env || "")}</span>
+        <span class="pill">${escapeHtml(item.version || "")}</span>
+        <span>${escapeHtml(item.timestamp || "")}</span>
+      </div>
+      <div><strong>Q:</strong> ${escapeHtml(item.prompt || "")}</div>
+      <div style="margin-top:6px;"><strong>A:</strong> ${escapeHtml((item.reply || "").slice(0, 220))}${(item.reply || "").length > 220 ? "…" : ""}</div>
+    `;
+
+    logsEl.appendChild(div);
+  }
+}
+
 async function sendPrompt() {
-  const prompt = document.getElementById("prompt").value;
+  const btn = document.getElementById("send");
+  const promptEl = document.getElementById("prompt");
   const replyEl = document.getElementById("reply");
   const modeEl = document.getElementById("mode");
 
-  replyEl.textContent = "Loading...";
-  modeEl.textContent = "";
+  const prompt = (promptEl?.value || "").trim();
+  if (!prompt) {
+    if (replyEl) replyEl.textContent = "Please enter a prompt.";
+    return;
+  }
 
-  const res = await fetch("/api/generate", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ prompt })
-  });
+  if (btn) btn.disabled = true;
+  if (replyEl) replyEl.textContent = "Generating…";
+  if (modeEl) modeEl.textContent = "working…";
 
-  const data = await res.json();
-  replyEl.textContent = data.reply || "(no reply)";
-  modeEl.textContent = `Mode: ${data.mode || "unknown"}`;
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
 
-  await loadLogs();
+    const data = await res.json();
+
+    if (replyEl) replyEl.textContent = data.reply || "(no reply)";
+    if (modeEl) modeEl.textContent = `mode: ${data.mode || "unknown"} • v ${data.version || "?"}`;
+
+    const logs = await fetchLogs();
+    renderLogs(logs);
+  } catch (e) {
+    if (replyEl) replyEl.textContent = "Error: could not reach server.";
+    if (modeEl) modeEl.textContent = "error";
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
-document.getElementById("send").addEventListener("click", sendPrompt);
-loadLogs();
+document.getElementById("send")?.addEventListener("click", sendPrompt);
+
+// initial load
+(async () => {
+  try {
+    const logs = await fetchLogs();
+    renderLogs(logs);
+  } catch {
+    // ignore
+  }
+})();

@@ -4,45 +4,297 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>AI Prompt Logger</title>
-    <div style="color:#666; margin-bottom:12px;">
-    Env: <strong>{{ env }}</strong> |
-    Version: <strong>{{ version }}</strong> |
-    <a href="/prompts">View saved prompts</a>
-    </div>
+
     <style>
-      body { font-family: system-ui, Arial; margin: 24px; max-width: 900px; }
-      textarea { width: 100%; height: 120px; }
-      button { padding: 10px 14px; margin-top: 10px; }
-      .row { display: flex; gap: 18px; }
-      .col { flex: 1; }
-      pre { white-space: pre-wrap; background: #f3f3f3; padding: 12px; border-radius: 8px; }
-      .log { border-bottom: 1px solid #ddd; padding: 10px 0; }
-      .muted { color: #666; font-size: 0.9em; }
-      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #eee; font-size: 0.85em; }
+      :root{
+        --bg: #0b1220;
+        --panel: rgba(255,255,255,0.06);
+        --panel2: rgba(255,255,255,0.08);
+        --border: rgba(255,255,255,0.12);
+        --text: rgba(255,255,255,0.92);
+        --muted: rgba(255,255,255,0.70);
+        --accent: #5b9dff;
+        --accent2: #22c55e;
+        --danger: #ef4444;
+        --shadow: 0 10px 30px rgba(0,0,0,0.35);
+        --radius: 14px;
+      }
+
+      * { box-sizing: border-box; }
+
+      body{
+        margin:0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 700px at 20% -10%, rgba(91,157,255,0.35), transparent 60%),
+          radial-gradient(900px 600px at 85% 5%, rgba(34,197,94,0.25), transparent 55%),
+          radial-gradient(800px 500px at 50% 110%, rgba(168,85,247,0.18), transparent 55%),
+          var(--bg);
+      }
+
+      .wrap{
+        max-width: 1100px;
+        margin: 28px auto;
+        padding: 0 18px;
+      }
+
+      header{
+        display:flex;
+        gap: 14px;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .title{
+        display:flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      h1{
+        font-size: 1.55rem;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+
+      .subtitle{
+        margin:0;
+        color: var(--muted);
+        font-size: 0.98rem;
+        line-height: 1.35;
+      }
+
+      .top-meta{
+        display:flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .chips{
+        display:flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .chip{
+        border: 1px solid var(--border);
+        background: var(--panel);
+        padding: 6px 10px;
+        border-radius: 999px;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset;
+        backdrop-filter: blur(10px);
+      }
+
+      .chip strong{ color: var(--text); font-weight: 650; }
+
+      .links{
+        display:flex;
+        gap: 10px;
+      }
+      .links a{
+        color: var(--text);
+        text-decoration:none;
+        font-weight: 600;
+        padding: 7px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+      }
+      .links a:hover{ border-color: rgba(91,157,255,0.55); }
+
+      main{
+        display:grid;
+        grid-template-columns: 1fr 420px;
+        gap: 16px;
+      }
+
+      @media (max-width: 980px){
+        main{ grid-template-columns: 1fr; }
+        .top-meta{ align-items:flex-start; }
+        .chips{ justify-content:flex-start; }
+      }
+
+      .card{
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.04));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px;
+        backdrop-filter: blur(12px);
+      }
+
+      .card h2{
+        margin: 0 0 10px 0;
+        font-size: 1.05rem;
+        letter-spacing: 0.2px;
+      }
+
+      textarea{
+        width:100%;
+        min-height: 160px;
+        resize: vertical;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(10,16,28,0.6);
+        color: var(--text);
+        padding: 12px;
+        outline: none;
+        font-size: 1rem;
+        line-height: 1.45;
+      }
+      textarea:focus{
+        border-color: rgba(91,157,255,0.7);
+        box-shadow: 0 0 0 3px rgba(91,157,255,0.18);
+      }
+
+      .actions{
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .btn{
+        appearance:none;
+        border: 0;
+        cursor:pointer;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        color: #081226;
+        background: linear-gradient(135deg, rgba(91,157,255,1), rgba(91,157,255,0.7));
+        box-shadow: 0 10px 20px rgba(91,157,255,0.25);
+      }
+      .btn:hover{ filter: brightness(1.05); }
+      .btn:disabled{
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .hint{
+        margin: 8px 0 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status{
+        color: var(--muted);
+        font-size: 0.92rem;
+        text-align:right;
+      }
+
+      .reply{
+        border: 1px solid var(--border);
+        background: rgba(10,16,28,0.55);
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 180px;
+        white-space: pre-wrap;
+        line-height: 1.45;
+      }
+
+      .logs{
+        margin-top: 14px;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+      }
+
+      .log-row{
+        border: 1px solid var(--border);
+        background: rgba(10,16,28,0.45);
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .log-meta{
+        color: var(--muted);
+        font-size: 0.85rem;
+        display:flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items:center;
+        margin-bottom: 6px;
+      }
+
+      .pill{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.06);
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 650;
+      }
+
+      .pill.ok{ border-color: rgba(34,197,94,0.35); }
+      .pill.ai{ border-color: rgba(91,157,255,0.40); }
+      .pill.stub{ border-color: rgba(148,163,184,0.35); }
+
+      .empty{
+        color: var(--muted);
+        margin: 10px 0 0 0;
+      }
     </style>
   </head>
+
   <body>
-    <h1>AI Prompt Logger</h1>
-    <p class="muted">
-      Enter a prompt, get a reply, and log the interaction. (Runs in stub mode unless enabled for real AI.)
-    </p>
+    <div class="wrap">
+      <header>
+        <div class="title">
+          <h1>AI Prompt Logger</h1>
+          <p class="subtitle">
+            Enter a prompt, get a reply, and automatically log the interaction.
+          </p>
+        </div>
 
-    <div class="row">
-      <div class="col">
-        <h2>Prompt</h2>
-        <textarea id="prompt" placeholder="Type a prompt..."></textarea>
-        <button id="send">Send</button>
-        <p class="muted" id="mode"></p>
-      </div>
+        <div class="top-meta">
+          <div class="chips">
+            <span class="chip">Env: <strong>{{ env }}</strong></span>
+            <span class="chip">Version: <strong>{{ version }}</strong></span>
+          </div>
+          <div class="links">
+            <a href="/prompts">Saved prompts</a>
+            <a href="/health" target="_blank" rel="noopener">Health</a>
+          </div>
+        </div>
+      </header>
 
-      <div class="col">
-        <h2>Reply</h2>
-        <pre id="reply">(reply will appear here)</pre>
-      </div>
+      <main>
+        <section class="card">
+          <h2>Prompt</h2>
+          <textarea id="prompt" placeholder="Type a prompt…"></textarea>
+
+          <div class="actions">
+            <button class="btn" id="send">Send</button>
+            <div class="status" id="mode">(mode: unknown)</div>
+          </div>
+
+          <p class="hint">
+            Tip: keep prompts short for a reliable demo. (You can run with stub mode for zero cost.)
+          </p>
+        </section>
+
+        <aside class="card">
+          <h2>Reply</h2>
+          <div class="reply" id="reply">(reply will appear here)</div>
+
+          <div class="logs">
+            <h2 style="margin-top:0;">Recent logs</h2>
+            <div id="logs"></div>
+            <p class="empty" id="logs-empty" style="display:none;">No logs yet.</p>
+          </div>
+        </aside>
+      </main>
     </div>
-
-    <h2>Recent Logs</h2>
-    <div id="logs"></div>
 
     <script src="/static/app.js"></script>
   </body>
