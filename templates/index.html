@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AI Prompt Logger</title>
+    <style>
+      body { font-family: system-ui, Arial; margin: 24px; max-width: 900px; }
+      textarea { width: 100%; height: 120px; }
+      button { padding: 10px 14px; margin-top: 10px; }
+      .row { display: flex; gap: 18px; }
+      .col { flex: 1; }
+      pre { white-space: pre-wrap; background: #f3f3f3; padding: 12px; border-radius: 8px; }
+      .log { border-bottom: 1px solid #ddd; padding: 10px 0; }
+      .muted { color: #666; font-size: 0.9em; }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #eee; font-size: 0.85em; }
+    </style>
+  </head>
+  <body>
+    <h1>AI Prompt Logger</h1>
+    <p class="muted">
+      Enter a prompt, get a reply, and log the interaction. (Runs in stub mode unless enabled for real AI.)
+    </p>
+
+    <div class="row">
+      <div class="col">
+        <h2>Prompt</h2>
+        <textarea id="prompt" placeholder="Type a prompt..."></textarea>
+        <button id="send">Send</button>
+        <p class="muted" id="mode"></p>
+      </div>
+
+      <div class="col">
+        <h2>Reply</h2>
+        <pre id="reply">(reply will appear here)</pre>
+      </div>
+    </div>
+
+    <h2>Recent Logs</h2>
+    <div id="logs"></div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
