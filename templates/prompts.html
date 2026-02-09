@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Saved Prompts</title>
+  <style>
+    body { font-family: system-ui; margin: 24px; }
+    .meta { color: #666; margin-bottom: 16px; }
+    .card { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+    pre { white-space: pre-wrap; }
+    a { text-decoration: none; color: #2563eb; }
+  </style>
+</head>
+<body>
+
+<h1>Saved Prompts</h1>
+<div class="meta">
+  Env: <strong>{{ env }}</strong> |
+  Version: <strong>{{ version }}</strong> |
+  <a href="/">Back</a>
+</div>
+
+{% if logs %}
+  {% for item in logs %}
+    <div class="card">
+      <div class="meta">
+        {{ item.timestamp }} | {{ item.mode }} | v {{ item.version }}
+      </div>
+      <h4>Prompt</h4>
+      <pre>{{ item.prompt }}</pre>
+      <h4>Reply</h4>
+      <pre>{{ item.reply }}</pre>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No prompts saved yet.</p>
+{% endif %}
+
+</body>
+</html>
