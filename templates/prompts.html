@@ -1,40 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8">
-  <title>Saved Prompts</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Saved Prompts — AI Prompt Logger</title>
+
   <style>
-    body { font-family: system-ui; margin: 24px; }
-    .meta { color: #666; margin-bottom: 16px; }
-    .card { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
-    pre { white-space: pre-wrap; }
-    a { text-decoration: none; color: #2563eb; }
+    :root{
+      --bg:#0b1220;
+      --panel: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --accent:#5b9dff;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 14px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(91,157,255,0.35), transparent 60%),
+        radial-gradient(900px 600px at 85% 5%, rgba(34,197,94,0.25), transparent 55%),
+        var(--bg);
+    }
+    .wrap{ max-width: 1000px; margin: 28px auto; padding: 0 18px; }
+
+    header{
+      display:flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    h1{ margin:0; font-size: 1.45rem; }
+    .muted{ color: var(--muted); }
+    .meta{ margin-top: 6px; display:flex; gap: 10px; flex-wrap: wrap; }
+    .chip{
+      border: 1px solid var(--border);
+      background: var(--panel);
+      padding: 6px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(10px);
+    }
+    a{
+      color: var(--text);
+      text-decoration:none;
+      font-weight: 650;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      padding: 7px 10px;
+      border-radius: 10px;
+    }
+    a:hover{ border-color: rgba(91,157,255,0.55); }
+
+    .card{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-top: 12px;
+      backdrop-filter: blur(12px);
+    }
+    .row-meta{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .pill{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 650;
+      color: var(--text);
+    }
+    .pill.mode{ border-color: rgba(91,157,255,0.40); }
+
+    .block-title{
+      margin: 10px 0 6px 0;
+      font-size: 0.95rem;
+      letter-spacing: 0.2px;
+      color: var(--text);
+    }
+    pre{
+      margin:0;
+      white-space: pre-wrap;
+      line-height: 1.45;
+      border: 1px solid var(--border);
+      background: rgba(10,16,28,0.55);
+      border-radius: 12px;
+      padding: 12px;
+      overflow:auto;
+    }
+    .empty{
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 12px;
+      background: rgba(255,255,255,0.04);
+    }
   </style>
 </head>
 <body>
-
-<h1>Saved Prompts</h1>
-<div class="meta">
-  Env: <strong>{{ env }}</strong> |
-  Version: <strong>{{ version }}</strong> |
-  <a href="/">Back</a>
-</div>
-
-{% if logs %}
-  {% for item in logs %}
-    <div class="card">
-      <div class="meta">
-        {{ item.timestamp }} | {{ item.mode }} | v {{ item.version }}
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Saved Prompts</h1>
+        <div class="meta">
+          <span class="chip">Env: <strong>{{ env }}</strong></span>
+          <span class="chip">Version: <strong>{{ version }}</strong></span>
+        </div>
+        <p class="muted" style="margin:10px 0 0 0;">
+          Full history of prompt/response logs (newest first).
+        </p>
       </div>
-      <h4>Prompt</h4>
-      <pre>{{ item.prompt }}</pre>
-      <h4>Reply</h4>
-      <pre>{{ item.reply }}</pre>
-    </div>
-  {% endfor %}
-{% else %}
-  <p>No prompts saved yet.</p>
-{% endif %}
+      <div>
+        <a href="/">← Back</a>
+      </div>
+    </header>
 
+    {% if logs %}
+      {% for item in logs %}
+        <div class="card">
+          <div class="row-meta">
+            <span class="pill mode">{{ item.mode }}</span>
+            <span class="pill">{{ item.env }}</span>
+            <span class="pill">v {{ item.version }}</span>
+            <span>{{ item.timestamp }}</span>
+          </div>
+
+          <div class="block-title">Prompt</div>
+          <pre>{{ item.prompt }}</pre>
+
+          <div class="block-title">Reply</div>
+          <pre>{{ item.reply }}</pre>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No prompts saved yet. Go back and send one.</div>
+    {% endif %}
+  </div>
 </body>
 </html>
