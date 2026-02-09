@@ -111,7 +111,7 @@ def generate():
 
 @app.route("/api/logs")
 def api_logs():
-    return jsonify(read_logs())
+    return jsonify({"logs": read_logs()})
 
 @app.route("/health")
 def health():
