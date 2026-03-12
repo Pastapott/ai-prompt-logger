@@ -22,6 +22,7 @@ phases:
         rsync -av --exclude='artifact' --exclude='.git' --exclude='deploy-package.zip' \
                 --exclude='*.pyc' --exclude='__pycache__' ./ artifact/
       - rm -f artifact/.env
+      - echo "BUILD_VERSION=$(git rev-parse --short HEAD)" > artifact/build_info.txt
 
   post_build:
     commands:
