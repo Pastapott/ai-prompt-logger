@@ -33,6 +33,8 @@ After=network.target
 User=ec2-user
 Group=ec2-user
 WorkingDirectory=$APP_DIR
+EnvironmentFile=$APP_DIR/.env
+# Fallbacks
 Environment="APP_ENV=prod"
 Environment="USE_REAL_AI=false"
 ExecStart=$VENV_DIR/bin/gunicorn -w 2 -b 127.0.0.1:8000 app:app
