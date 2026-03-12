@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - python -m pip install --upgrade pip
+      - pip install -r requirements.txt
+  pre_build:
+    commands:
+      - echo "Pre-build: run lint/tests (optional)"
+      # - pytest -q  # enable if you add tests
+  build:
+    commands:
+      - echo "Building deployable artifact..."
+      # create directory for artifact
+      - mkdir -p artifact
+      - cp -r ./* artifact/
+      # remove local dev files you don't want in artifact (optional)
+      - rm -f artifact/.env
+  post_build:
+    commands:
+      - echo "Packaging artifact..."
+      - cd artifact
+      - zip -r ../deploy-package.zip .
+artifacts:
+  files:
+    - deploy-package.zip
