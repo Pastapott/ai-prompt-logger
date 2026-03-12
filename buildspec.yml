@@ -5,24 +5,26 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      - python -m pip install --upgrade pip
-      - pip install -r requirements.txt
+      - "python -m pip install --upgrade pip"
+      - "pip install -r requirements.txt"
+
   pre_build:
     commands:
-      - echo "Pre-build: run lint/tests (optional)"
-      # - pytest -q  # enable if you add tests
+      - 'echo "Pre-build: run lint/tests (optional)"'
+      # - "pytest -q"
+
   build:
     commands:
-      - echo "Building deployable artifact..."
-      # create directory for artifact
-      - mkdir -p artifact
-      - cp -r ./* artifact/
-      - rm -f artifact/.env
+      - 'echo "Building deployable artifact..."'
+      - "mkdir -p artifact"
+      - "cp -r ./* artifact/"
+      - "rm -f artifact/.env"
+
   post_build:
     commands:
-      - echo "Packaging artifact..."
-      - cd artifact
-      - zip -r ../deploy-package.zip .
+      - 'echo "Packaging artifact..."'
+      - "cd artifact && zip -r ../deploy-package.zip ."
+
 artifacts:
   files:
     - deploy-package.zip
