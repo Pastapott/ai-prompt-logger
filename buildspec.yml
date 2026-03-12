@@ -15,10 +15,13 @@ phases:
 
   build:
     commands:
-      - 'echo "Building deployable artifact..."'
-      - "mkdir -p artifact"
-      - "cp -r ./* artifact/"
-      - "rm -f artifact/.env"
+      - echo "Building deployable artifact..."
+      - rm -rf artifact deploy-package.zip
+      - mkdir -p artifact
+      - |
+        rsync -av --exclude='artifact' --exclude='.git' --exclude='deploy-package.zip' \
+                --exclude='*.pyc' --exclude='__pycache__' ./ artifact/
+      - rm -f artifact/.env
 
   post_build:
     commands:
