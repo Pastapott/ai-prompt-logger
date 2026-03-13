@@ -11,14 +11,16 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-load_dotenv()
+load_dotenv(override=False)
 
 app = Flask(__name__)
 
 LOG_FILE = "prompt_logs.jsonl"
 
-APP_ENV = os.getenv("APP_ENV", "dev")
-USE_REAL_AI = os.getenv("USE_REAL_AI", "false").lower() == "true"
+def get_app_env():
+    return os.getenv("APP_ENV", "dev")
+def use_real_ai():
+    return os.getenv("USE_REAL_AI", "false").lower() == "true"
 
 # Build / version info
 def get_version():
@@ -56,7 +58,7 @@ def get_secret(secret_name: str, region_name: Optional[str] = None) -> dict:
         return {"value": secret_string}
 
 
-def get_gemini_api_key() -> str | None:
+def get_gemini_api_key() -> Optional[str]:
     env_key = os.getenv("GEMINI_API_KEY")
     if env_key:
         return env_key
@@ -80,14 +82,14 @@ def stub_ai(prompt: str) -> str:
     return f"(stub mode)\n\nPrompt received:\n{prompt}"
 
 def call_gemini(prompt: str) -> str:
-    api_key = get_gemini_api_key()
-    model_name = os.getenv("GEMINI_MODEL", "models/gemini-pro")
-
-    if not api_key:
-        return "ERROR: GEMINI_API_KEY not available"
-
-    genai.configure(api_key=api_key)
     try:
+        api_key = get_gemini_api_key()
+        model_name = os.getenv("GEMINI_MODEL", "models/gemini-pro")
+
+        if not api_key:
+            return "ERROR: GEMINI_API_KEY not available"
+
+        genai.configure(api_key=api_key)
         model = genai.GenerativeModel(model_name)
         response = model.generate_content(prompt)
         return response.text.strip()
@@ -114,7 +116,7 @@ def write_log(entry: dict):
 def index():
     return render_template(
         "index.html",
-        env=APP_ENV,
+        env=get_app_env(),
         version=BUILD_VERSION
     )
 
@@ -124,7 +126,7 @@ def prompts():
     return render_template(
         "prompts.html",
         logs=logs,
-        env=APP_ENV,
+        env=get_app_env(),
         version=BUILD_VERSION
     )
 
@@ -133,7 +135,7 @@ def generate():
     data = request.get_json()
     prompt = data.get("prompt", "").strip()
 
-    if USE_REAL_AI:
+    if use_real_ai():
         reply = call_gemini(prompt)
         mode = "real"
     else:
@@ -142,7 +144,7 @@ def generate():
 
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "env": APP_ENV,
+        "env": get_app_env(),
         "version": BUILD_VERSION,
         "mode": mode,
         "prompt": prompt,
@@ -161,9 +163,9 @@ def api_logs():
 def health():
     return jsonify({
         "status": "ok",
-        "env": APP_ENV,
+        "env": get_app_env(),
         "version": BUILD_VERSION,
-        "ai_enabled": USE_REAL_AI
+        "ai_enabled": use_real_ai()
     })
 
 if __name__ == "__main__":
