@@ -7,11 +7,12 @@ phases:
     commands:
       - python -m pip install --upgrade pip
       - pip install -r requirements.txt
+      - pip install pytest
 
   pre_build:
     commands:
-      - echo "Pre-build phase"
-      # - pytest -q
+      - echo "running tests..."
+      - pytest -q
 
   build:
     commands:
@@ -29,4 +30,5 @@ artifacts:
     - templates/**/*
     - static/**/*
     - scripts/**/*
+    - tests/**/*
   discard-paths: no
