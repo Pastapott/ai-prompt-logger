@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 APP_DIR="/opt/ai-prompt-logger"
 VENV_DIR="$APP_DIR/venv"
@@ -7,18 +7,23 @@ VENV_DIR="$APP_DIR/venv"
 echo "Installing system packages..."
 dnf install -y python3 python3-pip git
 
+echo "Ensuring app directory exists..."
+mkdir -p "$APP_DIR"
+
 echo "Creating virtual environment..."
 python3 -m venv "$VENV_DIR"
 
-echo "Activating virtual environment..."
-source "$VENV_DIR/bin/activate"
-
 echo "Upgrading pip..."
-pip install --upgrade pip
+"$VENV_DIR/bin/pip" install --upgrade pip
 
 echo "Installing Python dependencies..."
-pip install -r "$APP_DIR/requirements.txt"
-pip install gunicorn
+"$VENV_DIR/bin/pip" install -r "$APP_DIR/requirements.txt"
+"$VENV_DIR/bin/pip" install gunicorn
+
+echo "Ensuring .env file exists..."
+touch "$APP_DIR/.env"
+chown ec2-user:ec2-user "$APP_DIR/.env"
+chmod 640 "$APP_DIR/.env"
 
 echo "Setting ownership..."
 chown -R ec2-user:ec2-user "$APP_DIR"
@@ -34,7 +39,6 @@ User=ec2-user
 Group=ec2-user
 WorkingDirectory=$APP_DIR
 EnvironmentFile=$APP_DIR/.env
-# Fallbacks
 Environment="APP_ENV=prod"
 Environment="USE_REAL_AI=false"
 ExecStart=$VENV_DIR/bin/gunicorn -w 2 -b 127.0.0.1:8000 app:app
