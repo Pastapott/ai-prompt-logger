@@ -5,30 +5,28 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      - "python -m pip install --upgrade pip"
-      - "pip install -r requirements.txt"
+      - python -m pip install --upgrade pip
+      - pip install -r requirements.txt
 
   pre_build:
     commands:
-      - 'echo "Pre-build: run lint/tests (optional)"'
-      # - "pytest -q"
+      - echo "Pre-build phase"
+      # - pytest -q
 
   build:
     commands:
-      - echo "Building deployable artifact..."
-      - rm -rf artifact deploy-package.zip
-      - mkdir -p artifact
-      - |
-        rsync -av --exclude='artifact' --exclude='.git' --exclude='deploy-package.zip' \
-                --exclude='*.pyc' --exclude='__pycache__' ./ artifact/
-      - rm -f artifact/.env
-      - echo "BUILD_VERSION=$(git rev-parse --short HEAD)" > artifact/build_info.txt
-
-  post_build:
-    commands:
-      - 'echo "Packaging artifact..."'
-      - "cd artifact && zip -r ../deploy-package.zip ."
+      - echo "Preparing deployment artifact..."
+      - chmod +x scripts/*.sh
+      - test -f appspec.yml
+      - ls -la
+      - ls -la scripts
 
 artifacts:
   files:
-    - deploy-package.zip
+    - appspec.yml
+    - app.py
+    - requirements.txt
+    - templates/**/*
+    - static/**/*
+    - scripts/**/*
+  discard-paths: no
