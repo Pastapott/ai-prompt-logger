@@ -1,14 +1,28 @@
 #!/bin/bash
-set -euo pipefail
+set -euxo pipefail
 
-APP_DIR="/opt/ai-prompt-logger"
-VENV_DIR="$APP_DIR/venv"
+DEPLOY_ROOT="/opt/ai-prompt-logger"
+APP_DIR="$DEPLOY_ROOT/ai-prompt-logger"
+VENV_DIR="$DEPLOY_ROOT/venv"
+
+echo "=== Starting BeforeInstall ==="
+echo "DEPLOY_ROOT=$DEPLOY_ROOT"
+echo "APP_DIR=$APP_DIR"
+echo "VENV_DIR=$VENV_DIR"
 
 echo "Installing system packages..."
 dnf install -y python3 python3-pip git
 
-echo "Ensuring app directory exists..."
-mkdir -p "$APP_DIR"
+echo "Ensuring directories exist..."
+mkdir -p "$DEPLOY_ROOT"
+
+echo "Listing deploy root..."
+ls -la "$DEPLOY_ROOT"
+echo "Listing app dir..."
+ls -la "$APP_DIR"
+
+echo "Checking requirements file exists..."
+test -f "$APP_DIR/requirements.txt"
 
 echo "Creating virtual environment..."
 python3 -m venv "$VENV_DIR"
@@ -26,7 +40,7 @@ chown ec2-user:ec2-user "$APP_DIR/.env"
 chmod 640 "$APP_DIR/.env"
 
 echo "Setting ownership..."
-chown -R ec2-user:ec2-user "$APP_DIR"
+chown -R ec2-user:ec2-user "$DEPLOY_ROOT"
 
 echo "Creating systemd service..."
 cat > /etc/systemd/system/ai-prompt-logger.service <<EOF
@@ -51,3 +65,5 @@ EOF
 echo "Reloading systemd..."
 systemctl daemon-reload
 systemctl enable ai-prompt-logger
+
+echo "=== BeforeInstall completed ==="
