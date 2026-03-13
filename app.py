@@ -2,6 +2,10 @@ import os
 import json
 from datetime import datetime, timezone
 import subprocess
+from typing import Optional
+
+import boto3
+from botocore.exceptions import ClientError
 
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
@@ -30,17 +34,57 @@ def get_version():
 
 BUILD_VERSION = get_version()
 
+def get_secret(secret_name: str, region_name: Optional[str] = None) -> dict:
+    session = boto3.session.Session()
+    client = session.client(
+        service_name="secretsmanager",
+        region_name=region_name or os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "eu-west-2"
+    )
+
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+    except ClientError as e:
+        raise RuntimeError(f"Failed to retrieve secret '{secret_name}': {e}")
+
+    secret_string = response.get("SecretString")
+    if not secret_string:
+        raise RuntimeError(f"Secret '{secret_name}' has no SecretString value.")
+
+    try:
+        return json.loads(secret_string)
+    except json.JSONDecodeError:
+        return {"value": secret_string}
+
+
+def get_gemini_api_key() -> str | None:
+    env_key = os.getenv("GEMINI_API_KEY")
+    if env_key:
+        return env_key
+
+    secret_name = os.getenv("GEMINI_SECRET_NAME")
+    if not secret_name:
+        return None
+
+    secret = get_secret(secret_name)
+
+    return (
+        secret.get("GEMINI_API_KEY")
+        or secret.get("api_key")
+        or secret.get("value")
+    )
+
+
 # ---------------- AI ----------------
 
 def stub_ai(prompt: str) -> str:
     return f"(stub mode)\n\nPrompt received:\n{prompt}"
 
 def call_gemini(prompt: str) -> str:
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = get_gemini_api_key()
     model_name = os.getenv("GEMINI_MODEL", "models/gemini-pro")
 
     if not api_key:
-        return "ERROR: GEMINI_API_KEY not set"
+        return "ERROR: GEMINI_API_KEY not available"
 
     genai.configure(api_key=api_key)
     try:
