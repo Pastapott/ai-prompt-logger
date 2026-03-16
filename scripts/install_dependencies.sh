@@ -52,7 +52,7 @@ WorkingDirectory=$APP_DIR
 Environment="APP_ENV=prod"
 Environment="USE_REAL_AI=true"
 Environment="GEMINI_SECRET_NAME=Gemini_API_Key"
-Environment="GEMINI_MODEL=gemini-2.0-flash"
+Environment="GEMINI_MODEL=gemini-2.5-flash"
 ExecStart=$VENV_DIR/bin/gunicorn -w 2 -b 127.0.0.1:8000 app:app
 Restart=always
 
