@@ -52,7 +52,6 @@ After=network.target
 User=ec2-user
 Group=ec2-user
 WorkingDirectory=$APP_DIR
-EnvironmentFile=$APP_DIR/.env
 Environment="APP_ENV=prod"
 Environment="USE_REAL_AI=true"
 Environment="GEMINI_SECRET_NAME=Gemini_API_Key"
