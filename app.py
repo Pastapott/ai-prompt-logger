@@ -11,7 +11,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-load_dotenv(override=False)
+load_dotenv(override=True)
 
 app = Flask(__name__)
 
