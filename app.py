@@ -38,26 +38,10 @@ def get_version():
 
 BUILD_VERSION = get_version()
 
-def get_secret(secret_name: str, region_name: Optional[str] = None) -> dict:
-    session = boto3.session.Session()
-    client = session.client(
-        service_name="secretsmanager",
-        region_name=region_name or os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "eu-west-2"
-    )
-
-    try:
-        response = client.get_secret_value(SecretId=secret_name)
-    except ClientError as e:
-        raise RuntimeError(f"Failed to retrieve secret '{secret_name}': {e}")
-
-    secret_string = response.get("SecretString")
-    if not secret_string:
-        raise RuntimeError(f"Secret '{secret_name}' has no SecretString value.")
-
-    try:
-        return json.loads(secret_string)
-    except json.JSONDecodeError:
-        return {"value": secret_string}
+def get_secret(secret_name) -> dict:
+    client = boto3.client("secretsmanager", region_name="eu-west-2")
+    response = client.get_secret_value(SecretId=secret_name)
+    return json.load(response["SecretString"])
 
 
 def get_gemini_api_key() -> Optional[str]:
