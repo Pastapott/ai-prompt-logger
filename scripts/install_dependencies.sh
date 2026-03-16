@@ -1,3 +1,6 @@
+Here is the complete install_dependencies.sh script with the necessary cleanup commands and permission fixes added. This will handle the "Address already in use" and "Permission denied" errors that caused your CodePipeline to fail.
+
+Bash
 #!/bin/bash
 set -euxo pipefail
 
@@ -6,9 +9,11 @@ APP_DIR="$DEPLOY_ROOT/ai-prompt-logger"
 VENV_DIR="$DEPLOY_ROOT/venv"
 
 echo "=== Starting BeforeInstall ==="
-echo "DEPLOY_ROOT=$DEPLOY_ROOT"
-echo "APP_DIR=$APP_DIR"
-echo "VENV_DIR=$VENV_DIR"
+
+echo "Cleaning up old processes and ports..."
+dnf install -y psmisc 
+sudo fuser -k 8000/tcp || true
+sudo pkill -9 -f gunicorn || true
 
 echo "Installing system packages..."
 dnf install -y python3 python3-pip git
@@ -16,31 +21,22 @@ dnf install -y python3 python3-pip git
 echo "Ensuring directories exist..."
 mkdir -p "$DEPLOY_ROOT"
 
-echo "Listing deploy root..."
-ls -la "$DEPLOY_ROOT"
-echo "Listing app dir..."
-ls -la "$APP_DIR"
-
-echo "Checking requirements file exists..."
-test -f "$APP_DIR/requirements.txt"
-
 echo "Creating virtual environment..."
 python3 -m venv "$VENV_DIR"
 
-echo "Upgrading pip..."
+echo "Upgrading pip and installing dependencies..."
 "$VENV_DIR/bin/pip" install --upgrade pip
-
-echo "Installing Python dependencies..."
 "$VENV_DIR/bin/pip" install -r "$APP_DIR/requirements.txt"
 "$VENV_DIR/bin/pip" install gunicorn
 
-echo "Ensuring .env file exists..."
+echo "Ensuring .env and logs exist with correct permissions..."
 touch "$APP_DIR/.env"
-chown ec2-user:ec2-user "$APP_DIR/.env"
-chmod 640 "$APP_DIR/.env"
+touch "$APP_DIR/prompt_logs.jsonl"
+chmod 666 "$APP_DIR/prompt_logs.jsonl"
 
-echo "Setting ownership..."
+echo "Setting ownership to ec2-user..."
 chown -R ec2-user:ec2-user "$DEPLOY_ROOT"
+chmod -R 755 "$DEPLOY_ROOT"
 
 echo "Creating systemd service..."
 cat > /etc/systemd/system/ai-prompt-logger.service <<EOF
@@ -52,10 +48,11 @@ After=network.target
 User=ec2-user
 Group=ec2-user
 WorkingDirectory=$APP_DIR
+# Systemd Environment variables (Step B)
 Environment="APP_ENV=prod"
 Environment="USE_REAL_AI=true"
 Environment="GEMINI_SECRET_NAME=Gemini_API_Key"
-Environment="GEMINI_MODEL=gemini-2.5-flash"
+Environment="GEMINI_MODEL=gemini-2.0-flash"
 ExecStart=$VENV_DIR/bin/gunicorn -w 2 -b 127.0.0.1:8000 app:app
 Restart=always
 
@@ -63,8 +60,9 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-echo "Reloading systemd..."
+echo "Reloading systemd and restarting service..."
 systemctl daemon-reload
 systemctl enable ai-prompt-logger
+systemctl restart ai-prompt-logger
 
 echo "=== BeforeInstall completed ==="
