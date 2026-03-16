@@ -13,6 +13,8 @@ import google.generativeai as genai
 
 load_dotenv(override=True)
 
+print(f"DEBUG: APP_ENV is {os.getenv('APP_ENV')}")
+
 app = Flask(__name__)
 
 LOG_FILE = "prompt_logs.jsonl"
@@ -70,7 +72,8 @@ def get_gemini_api_key() -> Optional[str]:
     secret = get_secret(secret_name)
 
     return (
-        secret.get("GEMINI_API_KEY")
+        secret.get("Gemini_API_Key")
+        or secret.get("GEMINI_API_KEY")
         or secret.get("api_key")
         or secret.get("value")
     )
